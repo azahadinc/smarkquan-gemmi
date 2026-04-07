@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Map, BarChart3, CircleDot } from 'lucide-react';
+import { Map, BarChart3, CircleDot, LayoutGrid } from 'lucide-react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
+import { motion } from 'motion/react';
 
 const geoUrl = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
 
@@ -21,10 +22,17 @@ const colorScale = scaleLinear<string>()
   .domain([0, 50])
   .range(["#ff0000", "#00ff00"]);
 
+const getVolatilityColor = (vol: number) => {
+  if (vol < 2) return '#22c55e'; // green-500
+  if (vol < 4) return '#eab308'; // yellow-500
+  return '#ef4444'; // red-500
+};
+
 export const QuantTools: React.FC = () => {
   const [activeTool, setActiveTool] = useState('geo-map');
   const [minCoverage, setMinCoverage] = useState(0);
   const [hoveredCountry, setHoveredCountry] = useState<any>(null);
+  const [hoveredBubble, setHoveredBubble] = useState<any>(null);
 
   return (
     <div className="space-y-6">
@@ -35,6 +43,7 @@ export const QuantTools: React.FC = () => {
           { id: 'geo-map', label: 'Geographic Coverage', icon: Map },
           { id: 'market-data', label: 'Market Data', icon: BarChart3 },
           { id: 'stock-bubbles', label: 'Stock Bubbles', icon: CircleDot },
+          { id: 'market-treemap', label: 'Market Treemap', icon: LayoutGrid },
         ].map(tool => (
           <button 
             key={tool.id}
@@ -123,12 +132,76 @@ export const QuantTools: React.FC = () => {
         {activeTool === 'stock-bubbles' && (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white">Stock Bubbles</h3>
-            <div className="h-64 flex items-center justify-center gap-4">
-              {[ { size: 120, color: 'bg-brand-primary' }, { size: 80, color: 'bg-brand-secondary' }, { size: 100, color: 'bg-brand-danger' } ].map((bubble, i) => (
-                <div key={i} className={`${bubble.color} rounded-full opacity-70`} style={{ width: bubble.size, height: bubble.size }}></div>
+            <div className="h-96 flex items-center justify-center gap-4 relative">
+              {[ 
+                { ticker: 'AAPL', name: 'Apple Inc.', cap: 2800, vol: 1.2 }, 
+                { ticker: 'TSLA', name: 'Tesla, Inc.', cap: 700, vol: 4.5 }, 
+                { ticker: 'NVDA', name: 'NVIDIA Corp.', cap: 1200, vol: 3.2 } 
+              ].map((bubble, i) => (
+                <motion.div 
+                  key={i} 
+                  className="rounded-full flex items-center justify-center cursor-pointer"
+                  style={{ 
+                    width: bubble.cap / 10, 
+                    height: bubble.cap / 10,
+                    backgroundColor: getVolatilityColor(bubble.vol)
+                  }}
+                  whileHover={{ scale: 1.1 }}
+                  onMouseEnter={() => setHoveredBubble(bubble)}
+                  onMouseLeave={() => setHoveredBubble(null)}
+                >
+                  <span className="text-white font-bold text-xs">{bubble.ticker}</span>
+                </motion.div>
+              ))}
+              {hoveredBubble && (
+                <div className="absolute top-4 right-4 bg-gray-900 p-4 rounded-lg border border-gray-700 text-white shadow-xl">
+                  <p className="font-bold text-lg">{hoveredBubble.name} ({hoveredBubble.ticker})</p>
+                  <p>Market Cap: ${hoveredBubble.cap}B</p>
+                  <p>Volatility: {hoveredBubble.vol}%</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-center gap-6 text-sm text-gray-400">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div> Low Volatility
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div> Medium Volatility
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div> High Volatility
+              </div>
+            </div>
+            <p className="text-center text-gray-400 text-sm">Bubble size represents Market Cap. Color represents Volatility.</p>
+          </div>
+        )}
+
+        {activeTool === 'market-treemap' && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white">Market Treemap</h3>
+            <div className="h-96 grid grid-cols-4 grid-rows-3 gap-2">
+              {[
+                { name: 'BTC', change: 2.5, color: 'bg-green-600' },
+                { name: 'ETH', change: 1.2, color: 'bg-green-500' },
+                { name: 'SOL', change: -3.4, color: 'bg-red-600' },
+                { name: 'ADA', change: 0.5, color: 'bg-green-400' },
+                { name: 'DOT', change: -1.1, color: 'bg-red-500' },
+                { name: 'DOGE', change: 5.2, color: 'bg-green-700' },
+                { name: 'AVAX', change: -2.0, color: 'bg-red-500' },
+                { name: 'LINK', change: 0.8, color: 'bg-green-400' },
+                { name: 'UNI', change: -0.5, color: 'bg-red-400' },
+                { name: 'MATIC', change: 1.5, color: 'bg-green-500' },
+                { name: 'XRP', change: -1.8, color: 'bg-red-500' },
+                { name: 'LTC', change: 0.2, color: 'bg-green-400' },
+              ].map((item, i) => (
+                <div key={i} className={`${item.color} p-2 rounded flex flex-col justify-between text-white`}>
+                  <span className="font-bold">{item.name}</span>
+                  <span className="text-xs">{item.change}%</span>
+                </div>
               ))}
             </div>
-            <p className="text-center text-gray-400">Visual representation of market capitalization and volatility.</p>
+            <p className="text-center text-gray-400">Visual representation of market performance.</p>
           </div>
         )}
       </div>

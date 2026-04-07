@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Brain, LayoutDashboard, Settings as SettingsIcon, History, Bell, Search, User, Zap, Bot } from 'lucide-react';
+import { Brain, LayoutDashboard, Settings as SettingsIcon, History, Bell, Search, User, Zap, Bot, ShieldAlert } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const DashboardLayout: React.FC = () => {
@@ -18,6 +18,7 @@ export const DashboardLayout: React.FC = () => {
 
         <nav className="flex-1 w-full space-y-2">
           <NavItem icon={LayoutDashboard} label="Dashboard" to="/dashboard" />
+          <NavItem icon={ShieldAlert} label="Risk Management" to="/risk" />
           <NavItem icon={History} label="Trade History" to="/history" />
           <NavItem icon={Brain} label="Strategies" to="/strategies" />
           <NavItem icon={Zap} label="Live Performance" to="/live-performance" />
