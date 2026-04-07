@@ -1,0 +1,5 @@
+{
+  "name": "SmarkQuant Advanced",
+  "description": "A production-grade algorithmic trading ecosystem featuring real-time data streaming, regime detection, and advanced risk management.",
+  "requestFramePermissions": []
+}
