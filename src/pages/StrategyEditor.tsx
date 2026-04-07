@@ -51,11 +51,11 @@ def strategy(data):
         </div>
       </div>
       
-      <div className="flex-1 bg-black rounded-lg p-2 font-mono text-sm text-green-400 border border-gray-800 overflow-hidden shadow-inner">
+      <div className="flex-1 bg-black rounded-lg p-4 font-mono text-base text-green-400 border border-gray-800 overflow-hidden shadow-inner">
         <textarea 
           value={script}
           onChange={(e) => setScript(e.target.value)}
-          className="w-full h-full bg-transparent resize-none focus:outline-none"
+          className="w-full h-full bg-transparent resize-none focus:outline-none p-2"
           spellCheck="false"
         />
       </div>
@@ -66,13 +66,17 @@ def strategy(data):
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 flex items-center justify-center z-50 bg-black/50"
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm"
           >
-            <div className="glass-card p-8 flex flex-col items-center gap-4">
-              <CheckCircle2 size={48} className="text-brand-primary" />
-              <h2 className="text-2xl font-bold text-white">Strategy Saved!</h2>
-              <p className="text-xl text-brand-primary font-mono">{name}</p>
-            </div>
+            <motion.div 
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+              className="bg-gray-900 border border-brand-primary p-8 rounded-2xl flex flex-col items-center gap-4 shadow-2xl"
+            >
+              <CheckCircle2 size={64} className="text-brand-primary" />
+              <h2 className="text-3xl font-bold text-white">Strategy Saved!</h2>
+              <p className="text-2xl text-brand-primary font-mono bg-brand-primary/10 px-4 py-2 rounded-lg">{name}</p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
