@@ -1,7 +1,48 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart3, ShieldCheck, Zap, TrendingUp, Globe, Cpu, Lock } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Sphere, MeshDistortMaterial, Float, Stars, PerspectiveCamera } from '@react-three/drei';
+import * as THREE from 'three';
+
+const LandingGlobe: React.FC = () => {
+  const globeRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (globeRef.current) {
+      globeRef.current.rotation.y += 0.001;
+    }
+  });
+
+  return (
+    <group>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1.5} />
+      <mesh ref={globeRef}>
+        <sphereGeometry args={[2, 64, 64]} />
+        <meshStandardMaterial 
+          color="#1a1d23" 
+          wireframe 
+          transparent 
+          opacity={0.4} 
+          emissive="#22c55e"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      {/* Glow effect */}
+      <Sphere args={[2.1, 64, 64]}>
+        <meshStandardMaterial 
+          color="#22c55e" 
+          transparent 
+          opacity={0.05} 
+          side={THREE.BackSide}
+        />
+      </Sphere>
+      <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+    </group>
+  );
+};
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -109,7 +150,7 @@ export const Landing: React.FC = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-col sm:flex-row gap-4 mb-20"
+          className="flex flex-col sm:flex-row gap-4 mb-20 relative z-20"
         >
           <button 
             onClick={() => navigate('/auth')}
@@ -124,6 +165,13 @@ export const Landing: React.FC = () => {
             View Demo
           </button>
         </motion.div>
+
+        {/* 3D Earth Visual */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-[1200px] max-h-[1200px] pointer-events-none opacity-40">
+          <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+            <LandingGlobe />
+          </Canvas>
+        </div>
 
         {/* 3D Dashboard Preview */}
         <div 

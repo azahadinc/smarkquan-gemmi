@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Map, BarChart3, CircleDot, LayoutGrid, ShieldAlert, Settings, Activity, PieChart, ShieldCheck, Zap } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import { Map, BarChart3, CircleDot, LayoutGrid, ShieldAlert, Settings, Activity, PieChart, ShieldCheck, Zap, Globe as GlobeIcon } from 'lucide-react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
 import { motion } from 'motion/react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Sphere, MeshDistortMaterial, Float, Text, PerspectiveCamera, Stars } from '@react-three/drei';
+import * as THREE from 'three';
 
 const geoUrl = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
 
@@ -26,6 +29,135 @@ const getVolatilityColor = (vol: number) => {
   if (vol < 2) return '#22c55e'; // green-500
   if (vol < 4) return '#eab308'; // yellow-500
   return '#ef4444'; // red-500
+};
+
+// 3D Globe Component
+const Globe3D: React.FC<{ coverageData: any[], minCoverage: number, maxCoverage: number }> = ({ coverageData, minCoverage, maxCoverage }) => {
+  const globeRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (globeRef.current) {
+      globeRef.current.rotation.y += 0.002;
+    }
+  });
+
+  return (
+    <group>
+      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
+      
+      <mesh ref={globeRef}>
+        <sphereGeometry args={[2.5, 64, 64]} />
+        <meshStandardMaterial 
+          color="#111827" 
+          wireframe 
+          transparent 
+          opacity={0.3} 
+        />
+      </mesh>
+
+      {/* Data points on the globe */}
+      {coverageData.map((country, i) => {
+        const isVisible = country.coverage >= minCoverage && country.coverage <= maxCoverage;
+        if (!isVisible) return null;
+
+        // Random positions for demo (in a real app, these would be lat/long converted to 3D)
+        const phi = Math.acos(-1 + (2 * i) / coverageData.length);
+        const theta = Math.sqrt(coverageData.length * Math.PI) * phi;
+        
+        const x = 2.5 * Math.cos(theta) * Math.sin(phi);
+        const y = 2.5 * Math.sin(theta) * Math.sin(phi);
+        const z = 2.5 * Math.cos(phi);
+
+        return (
+          <Float key={country.id} speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+            <mesh position={[x, y, z]}>
+              <sphereGeometry args={[0.08, 16, 16]} />
+              <meshStandardMaterial 
+                color={colorScale(country.coverage)} 
+                emissive={colorScale(country.coverage)}
+                emissiveIntensity={2}
+              />
+            </mesh>
+          </Float>
+        );
+      })}
+    </group>
+  );
+};
+
+// 3D Bubble Chart Component
+const BubbleChart3D: React.FC<{ bubbles: any[], onHover: (bubble: any) => void }> = ({ bubbles, onHover }) => {
+  return (
+    <group>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      
+      {bubbles.map((bubble, i) => {
+        const x = (i - 1) * 3;
+        const size = bubble.cap / 500;
+        
+        return (
+          <Float key={bubble.ticker} speed={2} rotationIntensity={1} floatIntensity={1}>
+            <mesh 
+              position={[x, 0, 0]}
+              onPointerOver={() => onHover(bubble)}
+              onPointerOut={() => onHover(null)}
+            >
+              <sphereGeometry args={[size, 32, 32]} />
+              <MeshDistortMaterial 
+                color={getVolatilityColor(bubble.vol)} 
+                speed={2} 
+                distort={0.3} 
+                radius={1} 
+              />
+              <Text
+                position={[0, size + 0.5, 0]}
+                fontSize={0.3}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {bubble.ticker}
+              </Text>
+            </mesh>
+          </Float>
+        );
+      })}
+    </group>
+  );
+};
+
+// 3D Risk Shield Component
+const RiskShield3D: React.FC = () => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x = Math.sin(state.clock.getElapsedTime()) * 0.2;
+      meshRef.current.rotation.y += 0.01;
+    }
+  });
+
+  return (
+    <group>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
+      <Float speed={4} rotationIntensity={1} floatIntensity={2}>
+        <mesh ref={meshRef}>
+          <octahedronGeometry args={[2, 0]} />
+          <meshStandardMaterial 
+            color="#22c55e" 
+            wireframe 
+            emissive="#22c55e"
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      </Float>
+      <Stars radius={50} depth={50} count={1000} factor={4} saturation={0} fade speed={1} />
+    </group>
+  );
 };
 
 export const QuantTools: React.FC = () => {
@@ -101,32 +233,18 @@ export const QuantTools: React.FC = () => {
               </button>
             </div>
 
-            <div className="bg-black rounded-lg p-4 relative">
-              <ComposableMap projection="geoMercator" projectionConfig={{ scale: 120 }}>
-                <Geographies geography={geoUrl}>
-                  {({ geographies }) =>
-                    geographies.map((geo) => {
-                      const countryData = coverageData.find(c => c.id === geo.id);
-                      const isVisible = countryData ? (countryData.coverage >= minCoverage && countryData.coverage <= maxCoverage) : false;
-                      return (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill={isVisible ? colorScale(countryData!.coverage) : "#333"}
-                          stroke="#000"
-                          strokeWidth={0.5}
-                          onMouseEnter={() => countryData && setHoveredCountry(countryData)}
-                          onMouseLeave={() => setHoveredCountry(null)}
-                          style={{ 
-                            default: { outline: 'none' }, 
-                            hover: { fill: '#fff', stroke: '#fff', strokeWidth: 1, outline: 'none', cursor: 'pointer' } 
-                          }}
-                        />
-                      );
-                    })
-                  }
-                </Geographies>
-              </ComposableMap>
+            <div className="bg-black rounded-lg p-4 relative h-[500px] overflow-hidden">
+              <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
+                <Globe3D coverageData={coverageData} minCoverage={minCoverage} maxCoverage={maxCoverage} />
+                <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
+              </Canvas>
+
+              <div className="absolute bottom-4 left-4 flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className="w-2 h-2 rounded-full bg-brand-primary animate-pulse"></div>
+                  <span>Real-time Global Node Sync</span>
+                </div>
+              </div>
 
               {hoveredCountry && (
                 <div className="absolute top-4 right-4 bg-gray-900 p-3 rounded shadow-lg border border-gray-700 text-white">
@@ -185,34 +303,45 @@ export const QuantTools: React.FC = () => {
 
         {activeTool === 'stock-bubbles' && (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white">Stock Bubbles</h3>
-            <div className="h-96 flex items-center justify-center gap-4 relative">
-              {[ 
-                { ticker: 'AAPL', name: 'Apple Inc.', cap: 2800, vol: 1.2 }, 
-                { ticker: 'TSLA', name: 'Tesla, Inc.', cap: 700, vol: 4.5 }, 
-                { ticker: 'NVDA', name: 'NVIDIA Corp.', cap: 1200, vol: 3.2 } 
-              ].map((bubble, i) => (
-                <motion.div 
-                  key={i} 
-                  className="rounded-full flex items-center justify-center cursor-pointer"
-                  style={{ 
-                    width: bubble.cap / 10, 
-                    height: bubble.cap / 10,
-                    backgroundColor: getVolatilityColor(bubble.vol)
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  onMouseEnter={() => setHoveredBubble(bubble)}
-                  onMouseLeave={() => setHoveredBubble(null)}
-                >
-                  <span className="text-white font-bold text-xs">{bubble.ticker}</span>
-                </motion.div>
-              ))}
+            <h3 className="text-xl font-bold text-white">3D Stock Volatility Bubbles</h3>
+            <div className="h-[500px] bg-black rounded-xl relative overflow-hidden">
+              <Canvas camera={{ position: [0, 0, 10], fov: 45 }}>
+                <BubbleChart3D 
+                  bubbles={[ 
+                    { ticker: 'AAPL', name: 'Apple Inc.', cap: 2800, vol: 1.2 }, 
+                    { ticker: 'TSLA', name: 'Tesla, Inc.', cap: 700, vol: 4.5 }, 
+                    { ticker: 'NVDA', name: 'NVIDIA Corp.', cap: 1200, vol: 3.2 } 
+                  ]} 
+                  onHover={setHoveredBubble}
+                />
+                <OrbitControls enableZoom={false} />
+                <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+              </Canvas>
+
               {hoveredBubble && (
-                <div className="absolute top-4 right-4 bg-gray-900 p-4 rounded-lg border border-gray-700 text-white shadow-xl">
-                  <p className="font-bold text-lg">{hoveredBubble.name} ({hoveredBubble.ticker})</p>
-                  <p>Market Cap: ${hoveredBubble.cap}B</p>
-                  <p>Volatility: {hoveredBubble.vol}%</p>
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="absolute top-4 right-4 bg-gray-900/90 backdrop-blur-md p-4 rounded-xl border border-gray-700 text-white shadow-2xl z-20"
+                >
+                  <p className="font-bold text-lg text-brand-primary">{hoveredBubble.name}</p>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div className="flex justify-between gap-8">
+                      <span className="text-gray-400">Ticker</span>
+                      <span className="font-mono">{hoveredBubble.ticker}</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="text-gray-400">Market Cap</span>
+                      <span className="font-mono">${hoveredBubble.cap}B</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="text-gray-400">Volatility</span>
+                      <span className={`font-mono ${hoveredBubble.vol > 3 ? 'text-red-400' : 'text-green-400'}`}>
+                        {hoveredBubble.vol}%
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
               )}
             </div>
             
@@ -358,7 +487,18 @@ export const QuantTools: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 3D Risk Visualization */}
+              <div className="lg:col-span-1 bg-black rounded-2xl border border-gray-800 h-[300px] relative overflow-hidden">
+                <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
+                  <RiskShield3D />
+                </Canvas>
+                <div className="absolute bottom-4 left-4">
+                  <p className="text-[10px] text-brand-primary font-bold uppercase tracking-widest">System Integrity</p>
+                  <p className="text-white font-bold">100.0% SECURE</p>
+                </div>
+              </div>
+
               {/* Portfolio Optimization */}
               <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800 space-y-4">
                 <div className="flex items-center gap-2 text-brand-primary">
