@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, BrainCircuit, Zap, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MarketData, PerformanceStats as StatsType, Strategy, MarketRegime } from '../types';
+import { LiveFeed } from '../components/LiveFeed';
 
 interface DashboardProps {
   marketData: MarketData[];
@@ -26,6 +27,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ marketData, stats, strateg
             <div><p className="text-gray-500 text-sm">Assets</p><p className="text-xl font-bold text-white">3</p></div>
           </div>
         </div>
+        
+        {/* Live Feed Integration */}
+        <div className="lg:col-span-2">
+          <LiveFeed />
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Balance Chart */}
         <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
           <div className="flex justify-between items-center mb-4">

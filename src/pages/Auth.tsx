@@ -7,8 +7,18 @@ export const Auth: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4">
-      <div className="bg-[#1a1d23] rounded-3xl w-full max-w-4xl flex overflow-hidden shadow-2xl border border-gray-800">
+    <div className="min-h-screen bg-[#0f1115] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div 
+        className="absolute inset-0 z-0 opacity-30 bg-cover bg-center"
+        style={{ 
+          backgroundImage: 'url("https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=2832")',
+          filter: 'blur(1px)'
+        }}
+      />
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0f1115] via-transparent to-[#0f1115] opacity-80" />
+      
+      <div className="bg-[#1a1d23]/80 backdrop-blur-2xl rounded-3xl w-full max-w-4xl flex overflow-hidden shadow-2xl border border-gray-800 relative z-10">
         {/* Form Side */}
         <div className="w-full md:w-1/2 p-8 md:p-12">
           <div className="flex items-center gap-2 mb-8">
@@ -78,13 +88,21 @@ export const Auth: React.FC = () => {
         </div>
 
         {/* Visual Side */}
-        <div className="hidden md:flex w-1/2 bg-[#0f1115] items-center justify-center p-12">
-          <div className="text-center">
-            <div className="w-48 h-48 bg-gradient-to-br from-brand-primary to-green-800 rounded-3xl mx-auto mb-8 flex items-center justify-center shadow-2xl">
-              <span className="text-white text-6xl">↑</span>
+        <div className="hidden md:flex w-1/2 relative items-center justify-center p-12 overflow-hidden">
+          <div 
+            className="absolute inset-0 z-0 bg-cover bg-center"
+            style={{ 
+              backgroundImage: 'url("https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=2832")',
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f1115] via-transparent to-[#0f1115] opacity-60 z-10" />
+          
+          <div className="text-center relative z-20">
+            <div className="w-48 h-48 bg-brand-primary/20 backdrop-blur-md border border-brand-primary/30 rounded-3xl mx-auto mb-8 flex items-center justify-center shadow-2xl">
+              <span className="text-brand-primary text-6xl font-bold">↑</span>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Make Money Fast</h3>
-            <p className="text-gray-400">Trade smart with Tradefy.ai</p>
+            <h3 className="text-2xl font-bold text-white mb-2">Quant Trading</h3>
+            <p className="text-gray-300">Master the markets with Tradefy.ai</p>
           </div>
         </div>
       </div>

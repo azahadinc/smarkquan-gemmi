@@ -2,22 +2,38 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createServer } from "http";
+import { WebSocketManager } from "./src/services/WebSocketManager.js";
+import { featureStore } from "./src/services/FeatureStore.js";
+import { timeSeriesService } from "./src/services/TimeSeriesService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+  const httpServer = createServer(app);
   const PORT = 3000;
 
-  // Simulated Market Data API
-  app.get("/api/market-data", (req, res) => {
-    const data = Array.from({ length: 50 }, (_, i) => ({
-      time: new Date(Date.now() - (50 - i) * 60000).toISOString(),
-      price: 50000 + Math.random() * 1000 - 500,
-      volume: Math.floor(Math.random() * 100),
-    }));
+  // Initialize WebSocket Manager
+  const wsManager = new WebSocketManager(httpServer);
+
+  // Simulated Market Data API (now using TimeSeriesService)
+  app.get("/api/market-data", async (req, res) => {
+    const symbol = (req.query.symbol as string) || "BTC-USD";
+    const data = await timeSeriesService.query(symbol);
     res.json(data);
+  });
+
+  // Feature Store API
+  app.get("/api/features/:symbol", async (req, res) => {
+    const { symbol } = req.params;
+    try {
+      const features = await featureStore.getFeatures(symbol);
+      res.json(features);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to calculate features" });
+    }
   });
 
   // Simulated Strategy Performance
@@ -46,7 +62,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
