@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Brain, LayoutDashboard, Settings as SettingsIcon, History, Bell, Search, User, Zap, Bot, ShieldAlert } from 'lucide-react';
+import { Brain, LayoutDashboard, Settings as SettingsIcon, History, Bell, Search, User, Zap, Bot, ShieldAlert, Globe, Wrench } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const DashboardLayout: React.FC = () => {
@@ -23,7 +23,8 @@ export const DashboardLayout: React.FC = () => {
           <NavItem icon={Brain} label="Strategies" to="/strategies" />
           <NavItem icon={Zap} label="Live Performance" to="/live-performance" />
           <NavItem icon={Bot} label="Bots" to="/bots" />
-          <NavItem icon={SettingsIcon} label="Quant Tools" to="/quanttools" />
+          <NavItem icon={Globe} label="God's Eye" to="/godeye" />
+          <NavItem icon={Wrench} label="Quant Tools" to="/quanttools" />
           <NavItem icon={SettingsIcon} label="Settings" to="/settings" />
         </nav>
 

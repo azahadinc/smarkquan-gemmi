@@ -10,6 +10,7 @@ import { Strategies } from './pages/Strategies';
 import { StrategyDetail } from './pages/StrategyDetail';
 import { StrategyEditor } from './pages/StrategyEditor';
 import { QuantTools } from './pages/QuantTools';
+import { Godeye } from './pages/Godeye';
 import { Settings } from './pages/Settings';
 import { Profile } from './pages/Profile';
 import { LivePerformances } from './pages/LivePerformances';
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/strategies/:id" element={<StrategyDetail />} />
           <Route path="/strategy-editor" element={<StrategyEditor />} />
           <Route path="/quanttools" element={<QuantTools />} />
+          <Route path="/godeye" element={<Godeye />} />
           <Route path="/live-performance" element={<LivePerformances />} />
           <Route path="/bots" element={<Bots />} />
           <Route path="/settings" element={<Settings />} />

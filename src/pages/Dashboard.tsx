@@ -1,8 +1,9 @@
-import React from 'react';
-import { Plus, BrainCircuit, Zap, AlertCircle } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Plus, BrainCircuit, Zap, AlertCircle, Globe as GlobeIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MarketData, PerformanceStats as StatsType, Strategy, MarketRegime } from '../types';
 import { LiveFeed } from '../components/LiveFeed';
+import Globe from 'react-globe.gl';
 
 interface DashboardProps {
   marketData: MarketData[];
@@ -13,11 +14,20 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ marketData, stats, strategies, currentRegime }) => {
   const navigate = useNavigate();
+  const globeRef = useRef<any>();
+
+  useEffect(() => {
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = true;
+      globeRef.current.controls().autoRotateSpeed = 0.5;
+      globeRef.current.controls().enableZoom = false;
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* Top Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Currently Trading */}
         <div className="lg:col-span-1 bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl border border-gray-800 flex flex-col justify-between">
           <p className="text-gray-400">Currently Trading</p>
@@ -25,6 +35,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ marketData, stats, strateg
           <div className="flex gap-8 mt-4">
             <div><p className="text-gray-500 text-sm">Live Strategies</p><p className="text-xl font-bold text-white">4</p></div>
             <div><p className="text-gray-500 text-sm">Assets</p><p className="text-xl font-bold text-white">3</p></div>
+          </div>
+        </div>
+
+        {/* 3D Global Market View */}
+        <div className="lg:col-span-1 bg-black rounded-2xl border border-gray-800 relative overflow-hidden h-[200px] lg:h-auto flex items-center justify-center">
+          <div className="absolute top-4 left-4 z-10">
+            <div className="flex items-center gap-2 text-brand-primary">
+              <GlobeIcon size={16} />
+              <span className="text-xs font-bold uppercase tracking-widest">Global Market Activity</span>
+            </div>
+          </div>
+          <div className="w-full h-full scale-[1.5]">
+            <Globe
+              ref={globeRef}
+              backgroundColor="rgba(0,0,0,0)"
+              globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+              atmosphereColor="#22c55e"
+              atmosphereAltitude={0.15}
+            />
           </div>
         </div>
         
